@@ -10,7 +10,8 @@ app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
 }));
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // ── Cache: path resolution cached long-term, tokens are never cached (portals invalidate on re-handshake)
 const pathCache = new Map();
@@ -34,7 +35,7 @@ const API_PATHS = [
 function stalkerHeaders(mac, token = "", portalUrl = "", opts = {}) {
   const referer = portalUrl
     ? portalUrl.replace(/\/+$/, "").replace(/\/c$/, "") + "/c/"
-    : "http://localhost/";
+    : "http://localhost:8090/";
   const headers = {
     "User-Agent":    "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
     "Accept":        "*/*",
