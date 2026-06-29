@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+  <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+  <children>
+    <Rectangle id="background" width="1280" height="720" color="0x0b1020ff" />
+    <ProviderSettingsScene id="settingsView" visible="true" />
+    <ChannelListScene id="channelView" visible="false" />
+    <VideoPlayerScene id="playerView" visible="false" />
+  </children>
+</component>

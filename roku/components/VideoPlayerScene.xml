@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="VideoPlayerScene" extends="Group">
+  <script type="text/brightscript" uri="pkg:/components/VideoPlayerScene.brs" />
+  <interface>
+    <field id="videoUrl" type="string" onChange="OnVideoChanged" />
+    <field id="videoTitle" type="string" onChange="OnVideoChanged" />
+    <field id="closeRequested" type="boolean" alwaysNotify="true" />
+  </interface>
+  <children>
+    <Video id="video" width="1280" height="720" translation="[0,0]" />
+    <Label id="statusLabel" translation="[60,620]" width="1160" height="52" color="0xffffffff" font="font:MediumSystemFont" />
+  </children>
+</component>

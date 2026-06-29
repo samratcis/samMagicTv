@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
-const PROXY = import.meta.env.VITE_PROXY_URL || "http://localhost:3001";
+const APP_NAME = import.meta.env.VITE_APP_NAME || "SamMagicTV";
+const PROXY = import.meta.env.VITE_PROXY_URL || import.meta.env.VITE_WORKER_URL || "http://localhost:8787";
 const STREAM_PROXY = import.meta.env.VITE_STREAM_PROXY_URL || PROXY;
-const CATALOG_API = import.meta.env.VITE_CATALOG_URL || PROXY;
+const CATALOG_API = import.meta.env.VITE_CATALOG_URL || import.meta.env.VITE_WORKER_URL || PROXY;
 
 // Try CF Worker first (always-open CORS), fall back to Koyeb
 async function stalkerFetch(path) {
@@ -38,6 +39,98 @@ const GUEST_ID = getGuestId();
 // Cloud sync is handled by per-connection D1 catalog API (syncContentToD1, etc.)
 // Legacy session sync disabled — no /api/session endpoint on CF Worker
 function scheduleCloudSync() {}
+
+function useRemoteFocus() {
+  useEffect(() => {
+    const selectors = [
+      "button",
+      "input",
+      "textarea",
+      "select",
+      "a[href]",
+      ".tab",
+      ".nav",
+      ".theme-swatch",
+      ".conn-card",
+      ".cat",
+      ".ch-card",
+      ".vod-card",
+      ".cw-item",
+      ".gsearch-row",
+      ".disc-card",
+      ".disc-hero",
+      ".series-ep-item",
+      ".epg-ch-cell",
+      ".epg-prog",
+      ".ctx-item",
+    ].join(",");
+
+    const makeFocusable = () => {
+      document.querySelectorAll(selectors).forEach((el) => {
+        if (!el.hasAttribute("tabindex") && !el.matches("button,input,textarea,select,a[href]")) {
+          el.setAttribute("tabindex", "0");
+        }
+      });
+    };
+
+    const moveFocus = (dx, dy) => {
+      const items = [...document.querySelectorAll(selectors)]
+        .filter((el) => el.tabIndex >= 0 && !el.disabled && el.offsetParent !== null);
+      if (!items.length) return;
+      const active = document.activeElement && items.includes(document.activeElement)
+        ? document.activeElement
+        : items[0];
+      const ar = active.getBoundingClientRect();
+      const ax = ar.left + ar.width / 2;
+      const ay = ar.top + ar.height / 2;
+      let best = null;
+      let bestScore = Infinity;
+      for (const item of items) {
+        if (item === active) continue;
+        const r = item.getBoundingClientRect();
+        const x = r.left + r.width / 2;
+        const y = r.top + r.height / 2;
+        const vx = x - ax;
+        const vy = y - ay;
+        if ((dx < 0 && vx >= -4) || (dx > 0 && vx <= 4) || (dy < 0 && vy >= -4) || (dy > 0 && vy <= 4)) continue;
+        const primary = dx ? Math.abs(vx) : Math.abs(vy);
+        const secondary = dx ? Math.abs(vy) : Math.abs(vx);
+        const score = primary + secondary * 2;
+        if (score < bestScore) {
+          bestScore = score;
+          best = item;
+        }
+      }
+      best?.focus({ preventScroll: false });
+    };
+
+    const onKey = (e) => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      const editing = tag === "input" || tag === "textarea" || tag === "select";
+      if (editing && !["Escape", "Enter"].includes(e.key)) return;
+      if (e.key === "ArrowLeft") { e.preventDefault(); moveFocus(-1, 0); }
+      if (e.key === "ArrowRight") { e.preventDefault(); moveFocus(1, 0); }
+      if (e.key === "ArrowUp") { e.preventDefault(); moveFocus(0, -1); }
+      if (e.key === "ArrowDown") { e.preventDefault(); moveFocus(0, 1); }
+      if ((e.key === "Enter" || e.key === " ") && document.activeElement?.matches(selectors)) {
+        if (!editing) {
+          e.preventDefault();
+          document.activeElement.click();
+        }
+      }
+    };
+
+    makeFocusable();
+    const observer = new MutationObserver(makeFocusable);
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("keydown", onKey);
+    document.body.dataset.platform = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? "mobile" : "desktop";
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
+}
 
 const db = {
   async get(key, fallback = null) {
@@ -287,11 +380,13 @@ function genCSS(t) {
   --shadow:${isLight ? "rgba(0,0,0,0.08)" : "rgba(0,0,0,0.5)"};
   --hover-bg:${isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.03)"};
 }
-body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1);overflow:hidden}
-.app{display:flex;height:100vh;overflow:hidden;background:var(--bg)}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1);overflow:hidden;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.app{display:flex;height:100vh;min-height:100dvh;overflow:hidden;background:var(--bg)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;box-shadow:0 0 0 7px var(--glow)}
 
 /* SETUP */
-.setup{min-height:100vh;display:flex;align-items:center;justify-content:center;
+.setup{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at 20% 70%,${t.accent2}22 0%,transparent 55%),
              radial-gradient(ellipse at 80% 20%,${t.accent}18 0%,transparent 50%),var(--bg);padding:2rem}
 .card{background:var(--s1);border:1px solid var(--b2);border-radius:18px;padding:2.5rem;
@@ -602,6 +697,35 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1);overf
 .series-ep-play{font-size:.85rem;opacity:.5;transition:opacity .15s;flex-shrink:0}
 .series-ep-item:hover .series-ep-play{opacity:1}
 .series-loading{display:flex;align-items:center;justify-content:center;gap:.65rem;padding:2rem;color:var(--t2);font-size:.85rem}
+
+@media (max-width: 860px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100dvh;display:block;overflow:auto}
+  .sidebar{width:100%;height:auto;max-height:none;border-right:0;border-bottom:1px solid var(--b1);padding:.75rem 0}
+  .s-logo{font-size:1.1rem;margin-bottom:.7rem}
+  .theme-row{padding:0 .75rem;margin-bottom:.5rem}
+  .nav{min-height:44px}
+  .content{height:auto;min-height:60dvh;overflow:visible}
+  .c-header{position:sticky;top:0;z-index:20;background:var(--bg);padding:.75rem;gap:.6rem}
+  .c-body{display:block;overflow:visible}
+  .cats{width:100%;display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--b1);padding:.65rem;gap:.45rem}
+  .cat{flex:0 0 auto;min-height:42px}
+  .ch-grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr));padding:.75rem}
+  .vod-grid{grid-template-columns:repeat(auto-fill,minmax(125px,1fr));padding:.75rem}
+  .player-wrap{width:100vw;height:100dvh}
+  .player-bar{flex-wrap:wrap;gap:.55rem;padding:.65rem max(.65rem,env(safe-area-inset-right)) max(.65rem,env(safe-area-inset-bottom)) max(.65rem,env(safe-area-inset-left))}
+  .kbd-hint{display:none}
+  .card{max-width:100%;padding:1.2rem;border-radius:12px}
+  .setup{align-items:flex-start;padding:max(1rem,env(safe-area-inset-top)) 1rem 1rem}
+}
+
+@media (min-width: 861px) and (pointer: coarse){
+  .nav,.cat,.ch-card,.vod-card,.c-btn,.btn-sm,.btn-go,.player-ctrl,.player-close{min-height:44px}
+}
+
+@media (min-width: 1200px){
+  .ch-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+}
 `;
 }
 
@@ -972,7 +1096,7 @@ function Player({ item, channelList, epgData, onClose, onFav, isFav, connType })
 // ══════════════════════════════════════════════════════════════════
 function Setup({ onConnect, connections = [], onReconnect }) {
   const [type, setType]     = useState("xtream");
-  const [f, setF]           = useState({ server:"", user:"", pass:"", mac:"", url:"", serial:"", deviceId:"", deviceId2:"" });
+  const [f, setF]           = useState({ server:"http://starmagic.vip:8080", user:"samrat1986", pass:"S476581986", mac:"", url:"", serial:"", deviceId:"", deviceId2:"" });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [rawText, setRawText] = useState("");
   const [detected, setDetected] = useState([]);
@@ -1183,7 +1307,7 @@ function Setup({ onConnect, connections = [], onReconnect }) {
   return (
     <div className="setup">
       <div className="card">
-        <div className="logo">STREAMVAULT</div>
+        <div className="logo">{APP_NAME}</div>
         <div className="tagline">Your personal IPTV client · Connect your own legal service</div>
 
         {/* Saved connections — quick reconnect */}
@@ -1381,6 +1505,7 @@ const NAV = [
 ];
 
 export default function App() {
+  useRemoteFocus();
   // ── connection & data
   const [conn, setConn]       = useState(null);
   const [channels, setChannels] = useState([]);
@@ -2217,7 +2342,7 @@ export default function App() {
     <div className="app">
       {/* ── SIDEBAR ── */}
       <div className="sidebar">
-        <div className="s-logo">STREAMVAULT</div>
+        <div className="s-logo">{APP_NAME}</div>
 
         {/* Connection Card */}
         {activeConnection && (

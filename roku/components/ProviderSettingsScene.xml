@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProviderSettingsScene" extends="Group">
+  <script type="text/brightscript" uri="pkg:/components/ProviderSettingsScene.brs" />
+  <interface>
+    <field id="settings" type="assocarray" onChange="OnSettingsSet" />
+    <field id="settingsChanged" type="assocarray" alwaysNotify="true" />
+    <field id="loadRequested" type="boolean" alwaysNotify="true" />
+    <field id="directPlayRequested" type="boolean" alwaysNotify="true" />
+    <field id="status" type="string" onChange="OnStatusChanged" />
+  </interface>
+  <children>
+    <Label id="title" text="StreamVault Roku" translation="[80,50]" width="1120" height="42" color="0xf8fafcff" font="font:LargeBoldSystemFont" />
+    <Label id="subtitle" text="Configure your Worker, then fetch a catalog or play a direct HLS URL." translation="[80,98]" width="1120" height="32" color="0x94a3b8ff" font="font:MediumSystemFont" />
+    <LabelList id="menu" translation="[80,165]" itemSize="[1120,56]" numRows="7" vertFocusAnimationStyle="fixedFocusWrap" />
+    <Label id="statusLabel" translation="[80,600]" width="1120" height="60" color="0x38bdf8ff" wrap="true" font="font:MediumSystemFont" />
+  </children>
+</component>

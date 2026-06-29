@@ -1,0 +1,14 @@
+{
+  "id": "com.streamvault.tv",
+  "version": "1.0.0",
+  "vendor": "StreamVault",
+  "type": "web",
+  "main": "www/dist/index.html",
+  "title": "StreamVault",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "uiRevision": 2,
+  "requiredPermissions": [
+    "internet"
+  ]
+}

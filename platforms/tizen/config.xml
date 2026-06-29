@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets"
+        xmlns:tizen="http://tizen.org/ns/widgets"
+        id="com.streamvault.tv"
+        version="1.0.0"
+        viewmodes="maximized">
+  <tizen:application id="StreamVault.TV" package="StreamVault" required_version="5.5"/>
+  <content src="www/dist/index.html"/>
+  <feature name="http://tizen.org/feature/screen.size.all"/>
+  <icon src="www/icon.png"/>
+  <name>StreamVault</name>
+  <description>StreamVault IPTV client for Samsung Tizen TVs.</description>
+  <author email="dev@example.com" href="https://portalheaven.stream/">StreamVault</author>
+  <license href="../../LICENSE">PolyForm Noncommercial 1.0.0</license>
+  <tizen:profile name="tv-samsung"/>
+  <tizen:setting screen-orientation="landscape"
+                 context-menu="disable"
+                 background-support="disable"
+                 encryption="disable"
+                 install-location="auto"
+                 hwkey-event="enable"/>
+  <access origin="*" subdomains="true"/>
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+</widget>

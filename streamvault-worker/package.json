@@ -1,9 +1,10 @@
 {
-  "name": "streamvault-worker",
+  "name": "sammagictv-worker",
   "version": "1.0.0",
   "private": true,
   "description": "Cloudflare Worker — IPTV proxy for Stalker, Xtream, M3U (replaces stalker-proxy)",
   "scripts": {
+    "build": "wrangler deploy --dry-run",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"
   },

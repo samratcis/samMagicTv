@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ChannelListScene" extends="Group">
+  <script type="text/brightscript" uri="pkg:/components/ChannelListScene.brs" />
+  <interface>
+    <field id="channels" type="array" onChange="OnChannelsChanged" />
+    <field id="status" type="string" onChange="OnStatusChanged" />
+    <field id="playRequested" type="assocarray" alwaysNotify="true" />
+    <field id="backRequested" type="boolean" alwaysNotify="true" />
+    <field id="reloadRequested" type="boolean" alwaysNotify="true" />
+  </interface>
+  <children>
+    <Label id="title" text="Channels" translation="[80,50]" width="1120" height="42" color="0xf8fafcff" font="font:LargeBoldSystemFont" />
+    <Label id="hint" text="OK plays selected channel. Back returns to settings." translation="[80,98]" width="1120" height="32" color="0x94a3b8ff" font="font:MediumSystemFont" />
+    <LabelList id="list" translation="[80,150]" itemSize="[1120,48]" numRows="9" vertFocusAnimationStyle="fixedFocusWrap" />
+    <Label id="statusLabel" translation="[80,620]" width="1120" height="52" color="0x38bdf8ff" wrap="true" font="font:MediumSystemFont" />
+  </children>
+</component>

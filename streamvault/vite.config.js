@@ -5,6 +5,9 @@ export default defineConfig({
   plugins: [react()],
 
   server: {
+    host: '0.0.0.0',
+    port: 8090,
+    allowedHosts: ['tv.tarsira.com', 'localhost', '127.0.0.1'],
     proxy: {
       '/stalker': {
         target: 'http://localhost:3001',
